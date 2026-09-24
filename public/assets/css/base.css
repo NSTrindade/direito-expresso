@@ -1,0 +1,230 @@
+/* =====================================================================
+   Direito Expresso — base.css
+   Reset + variáveis de design compartilhadas pelas 3 versões (web,
+   totem, admin). Paleta extraída do protótipo em Figma (verde/azul-
+   marinho). Sem fontes externas de propósito: o totem deve funcionar
+   offline sem depender de CDN de fontes.
+   ===================================================================== */
+
+:root {
+  --cor-primaria: #1b8a4e;
+  --cor-primaria-escura: #146b3c;
+  --cor-primaria-clara: #e6f6ec;
+
+  --cor-secundaria: #1b2a4a;
+  --cor-secundaria-escura: #12203a;
+
+  --cor-texto: #1f2937;
+  --cor-texto-suave: #6b7280;
+  --cor-fundo: #f7f9fc;
+  --cor-borda: #e5e7eb;
+  --cor-branco: #ffffff;
+
+  --cor-azul: #2f6fed;
+  --cor-azul-clara: #e8f0fe;
+  --cor-laranja: #f5a524;
+  --cor-laranja-clara: #fdf1dd;
+  --cor-roxo: #7c4dff;
+  --cor-roxo-claro: #efe9ff;
+  --cor-vermelho: #dc2626;
+  --cor-vermelho-clara: #fde8e8;
+
+  --raio: 12px;
+  --raio-pequeno: 8px;
+  --sombra: 0 4px 16px rgba(20, 32, 58, 0.08);
+  --fonte: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--fonte);
+  color: var(--cor-texto);
+  background: var(--cor-fundo);
+  line-height: 1.5;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* --- Botões --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 999px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primario {
+  background: var(--cor-primaria);
+  color: var(--cor-branco);
+}
+
+.btn-primario:hover {
+  background: var(--cor-primaria-escura);
+}
+
+.btn-secundario {
+  background: var(--cor-branco);
+  color: var(--cor-secundaria);
+  border: 1px solid var(--cor-borda);
+}
+
+.btn-secundario:hover {
+  background: var(--cor-fundo);
+}
+
+.btn-perigo {
+  background: var(--cor-vermelho);
+  color: var(--cor-branco);
+}
+
+.btn-bloco {
+  width: 100%;
+}
+
+/* --- Cartões --- */
+.card {
+  background: var(--cor-branco);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+}
+
+/* --- Selo / badge / pill --- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.pill-verde {
+  background: var(--cor-primaria-clara);
+  color: var(--cor-primaria-escura);
+}
+
+.pill-azul {
+  background: var(--cor-azul-clara);
+  color: var(--cor-azul);
+}
+
+.pill-laranja {
+  background: var(--cor-laranja-clara);
+  color: #93610b;
+}
+
+.pill-roxo {
+  background: var(--cor-roxo-claro);
+  color: var(--cor-roxo);
+}
+
+.pill-cinza {
+  background: var(--cor-borda);
+  color: var(--cor-texto-suave);
+}
+
+/* --- Formulários --- */
+label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.88rem;
+  margin-bottom: 6px;
+  color: var(--cor-secundaria);
+}
+
+.campo {
+  margin-bottom: 18px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="date"],
+input[type="search"],
+select,
+textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--raio-pequeno);
+  border: 1px solid var(--cor-borda);
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: var(--cor-branco);
+  color: var(--cor-texto);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid var(--cor-primaria);
+  outline-offset: 1px;
+}
+
+/* --- Mensagens flash (admin / contato) --- */
+.alerta {
+  padding: 12px 16px;
+  border-radius: var(--raio-pequeno);
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.alerta-sucesso {
+  background: var(--cor-primaria-clara);
+  color: var(--cor-primaria-escura);
+}
+
+.alerta-erro {
+  background: var(--cor-vermelho-clara);
+  color: var(--cor-vermelho);
+}
+
+.texto-suave {
+  color: var(--cor-texto-suave);
+}

@@ -1,0 +1,283 @@
+/* =====================================================================
+   Direito Expresso — totem.css (Kiosk Mode)
+   Heurística de fast-food (seção 7.4.2 do pré-projeto): botões
+   gigantes, altíssimo contraste, sem barra de rolagem visível, fluxo
+   passo a passo com "Voltar"/"Recomeçar" sempre fixos na tela.
+   ===================================================================== */
+
+html.totem,
+body.totem {
+  height: 100%;
+  overflow: hidden; /* sem barra de rolagem no corpo — só o conteúdo interno pode rolar */
+  background: var(--cor-secundaria-escura);
+  color: var(--cor-branco);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.totem-tela {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Topo fixo: logo + migalhas de pão (breadcrumb) --- */
+.totem-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 48px;
+  flex-shrink: 0;
+}
+
+.totem-logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.totem-logo span {
+  color: var(--cor-primaria);
+}
+
+.totem-breadcrumb {
+  display: flex;
+  gap: 14px;
+  font-size: 1rem;
+  opacity: 0.8;
+  font-weight: 600;
+}
+
+.totem-breadcrumb .passo-atual {
+  opacity: 1;
+  color: var(--cor-primaria);
+}
+
+/* --- Área de conteúdo: pode rolar, mas sem mostrar a barra --- */
+.totem-conteudo {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge legado */
+  padding: 8px 48px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.totem-conteudo::-webkit-scrollbar {
+  display: none; /* Chrome/Edge/Safari */
+}
+
+.totem-titulo {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 8px 0 6px;
+}
+
+.totem-subtitulo {
+  font-size: 1.15rem;
+  opacity: 0.8;
+  max-width: 640px;
+  margin: 0 0 36px;
+}
+
+/* --- Tela de descanso (início) --- */
+.totem-inicio {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+}
+
+.totem-inicio .selo {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--cor-primaria);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: 800;
+}
+
+/* --- Grade de cartões gigantes (categorias / dúvidas) --- */
+.totem-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+  width: 100%;
+  max-width: 1040px;
+}
+
+.totem-cartao {
+  background: var(--cor-branco);
+  color: var(--cor-secundaria);
+  border: none;
+  border-radius: 22px;
+  padding: 36px 26px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 220px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  transition: transform 0.08s ease, background 0.15s ease;
+}
+
+.totem-cartao:active {
+  transform: scale(0.95);
+  background: var(--cor-primaria-clara);
+}
+
+.totem-cartao .icone-grande {
+  font-size: 3rem;
+}
+
+.totem-cartao .descricao-pequena {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--cor-texto-suave);
+}
+
+/* --- Botões gigantes de ação --- */
+.totem-botao {
+  min-height: 92px;
+  padding: 0 48px;
+  font-size: 1.4rem;
+  font-weight: 800;
+  border-radius: 999px;
+  border: none;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  transition: transform 0.08s ease;
+}
+
+.totem-botao:active {
+  transform: scale(0.95);
+}
+
+.totem-botao-primario {
+  background: var(--cor-primaria);
+  color: var(--cor-branco);
+}
+
+.totem-botao-secundario {
+  background: transparent;
+  color: var(--cor-branco);
+  border: 3px solid rgba(255, 255, 255, 0.6);
+}
+
+/* --- Rodapé fixo: Voltar / Recomeçar sempre visíveis (regra de ouro) --- */
+.totem-rodape {
+  flex-shrink: 0;
+  padding: 24px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* --- Cartão de resultado da triagem --- */
+.totem-resultado {
+  background: var(--cor-branco);
+  color: var(--cor-texto);
+  border-radius: 24px;
+  padding: 40px;
+  max-width: 760px;
+  width: 100%;
+  text-align: left;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.totem-resultado .bloco {
+  margin-bottom: 24px;
+}
+
+.totem-resultado .bloco h3 {
+  color: var(--cor-secundaria);
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 8px;
+}
+
+.totem-resultado .bloco p {
+  font-size: 1.15rem;
+  line-height: 1.6;
+}
+
+.totem-resultado .orgao-destino {
+  background: var(--cor-primaria-clara);
+  border-radius: var(--raio);
+  padding: 18px 22px;
+}
+
+.totem-resultado .orgao-destino strong {
+  display: block;
+  color: var(--cor-primaria-escura);
+  font-size: 1.15rem;
+  margin-bottom: 4px;
+}
+
+/* --- Chatbot --- */
+.totem-chat {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 20px;
+}
+
+.totem-bolha {
+  padding: 16px 20px;
+  border-radius: 18px;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  max-width: 85%;
+  text-align: left;
+  white-space: pre-line;
+}
+
+.totem-bolha-cidadao {
+  align-self: flex-end;
+  background: var(--cor-primaria);
+  color: var(--cor-branco);
+  border-bottom-right-radius: 4px;
+}
+
+.totem-bolha-ia {
+  align-self: flex-start;
+  background: var(--cor-branco);
+  color: var(--cor-texto);
+  border-bottom-left-radius: 4px;
+}
+
+.totem-chat-form {
+  flex-shrink: 0;
+  display: flex;
+  gap: 12px;
+  padding: 16px 48px 28px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.totem-chat-form textarea {
+  flex: 1;
+  min-height: 64px;
+  font-size: 1.15rem;
+  border-radius: 18px;
+  border: none;
+  padding: 16px 20px;
+}
+
+.totem-chat-form button {
+  min-height: 64px;
+}

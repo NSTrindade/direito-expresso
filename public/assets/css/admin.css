@@ -1,0 +1,227 @@
+/* =====================================================================
+   Direito Expresso — admin.css (painel administrativo)
+   ===================================================================== */
+
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-sidebar {
+  width: 240px;
+  background: var(--cor-secundaria);
+  color: var(--cor-branco);
+  flex-shrink: 0;
+  padding: 28px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-sidebar .marca {
+  padding: 0 24px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  margin-bottom: 16px;
+}
+
+.admin-sidebar .marca strong {
+  display: block;
+  font-size: 1.05rem;
+}
+
+.admin-sidebar .marca span {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.admin-nav a {
+  display: block;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.75);
+  border-left: 3px solid transparent;
+}
+
+.admin-nav a.ativo {
+  color: var(--cor-branco);
+  background: rgba(255, 255, 255, 0.08);
+  border-left-color: var(--cor-primaria);
+}
+
+.admin-nav a:hover {
+  color: var(--cor-branco);
+}
+
+.admin-sair {
+  margin-top: auto;
+  padding: 16px 24px 0;
+}
+
+.admin-sair a {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+}
+
+.admin-conteudo {
+  flex: 1;
+  padding: 32px 40px;
+  max-width: 1100px;
+}
+
+.admin-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.admin-cabecalho h1 {
+  margin: 0;
+  color: var(--cor-secundaria);
+  font-size: 1.5rem;
+}
+
+.admin-usuario {
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+}
+
+/* --- Cards de estatística (dashboard) --- */
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.admin-stats .card {
+  padding: 20px;
+}
+
+.admin-stats .numero {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--cor-primaria);
+}
+
+.admin-stats .rotulo {
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+}
+
+/* --- Tabelas --- */
+.tabela-wrapper {
+  overflow-x: auto;
+}
+
+table.admin-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--cor-branco);
+  border-radius: var(--raio);
+  overflow: hidden;
+}
+
+table.admin-tabela th,
+table.admin-tabela td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--cor-borda);
+  font-size: 0.9rem;
+}
+
+table.admin-tabela th {
+  background: var(--cor-fundo);
+  color: var(--cor-texto-suave);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+table.admin-tabela tr:last-child td {
+  border-bottom: none;
+}
+
+.tabela-acoes {
+  display: flex;
+  gap: 8px;
+}
+
+.tabela-acoes .btn {
+  padding: 6px 14px;
+  font-size: 0.8rem;
+}
+
+/* --- Layout de formulário lado a lado com a listagem --- */
+.admin-grade-form {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 28px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .admin-grade-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-grade-form .card {
+  padding: 22px;
+}
+
+.admin-grade-form h2 {
+  margin-top: 0;
+  font-size: 1.05rem;
+  color: var(--cor-secundaria);
+}
+
+.checkbox-lista {
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-pequeno);
+  padding: 10px 14px;
+}
+
+.checkbox-lista label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+  margin-bottom: 6px;
+}
+
+.checkbox-lista input {
+  width: auto;
+}
+
+/* --- Página de login --- */
+.admin-login-tela {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cor-secundaria);
+  padding: 24px;
+}
+
+.admin-login-caixa {
+  background: var(--cor-branco);
+  border-radius: var(--raio);
+  padding: 40px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: var(--sombra);
+}
+
+.admin-login-caixa .marca {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.admin-login-caixa .marca strong {
+  display: block;
+  color: var(--cor-secundaria);
+  font-size: 1.2rem;
+}
