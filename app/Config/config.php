@@ -48,7 +48,7 @@ if (!isset($GLOBALS['__direitoExpressoConfig'])) {
         ],
         'gemini' => [
             'api_key'  => getenv('GEMINI_API_KEY') ?: '',
-            'model'    => getenv('GEMINI_MODEL') ?: 'gemini-1.5-flash',
+            'model'    => getenv('GEMINI_MODEL') ?: 'gemini-3.6-flash',
             'endpoint' => 'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s',
         ],
         'app' => [
