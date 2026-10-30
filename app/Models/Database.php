@@ -14,13 +14,25 @@ class Database
             $config = require dirname(__DIR__) . '/Config/config.php';
             $db = $config['db'];
 
-            $dsn = "mysql:host={$db['host']};dbname={$db['name']};charset={$db['charset']}";
+            $dsn = "mysql:host={$db['host']};port={$db['port']};dbname={$db['name']};charset={$db['charset']}";
 
-            self::$instance = new PDO($dsn, $db['user'], $db['pass'], [
+            $opcoes = [
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES   => false,
-            ]);
+            ];
+
+            // TLS para bancos na nuvem (no XAMPP local isso fica desligado).
+            if ($db['ssl']) {
+                if ($db['ssl_ca'] !== '') {
+                    $opcoes[PDO::MYSQL_ATTR_SSL_CA] = $db['ssl_ca'];
+                    $opcoes[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = true;
+                } else {
+                    $opcoes[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+                }
+            }
+
+            self::$instance = new PDO($dsn, $db['user'], $db['pass'], $opcoes);
         }
 
         return self::$instance;

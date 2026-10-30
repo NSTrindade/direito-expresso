@@ -1,6 +1,6 @@
 <?php
 /**
- * Integração com a API do Gemini 1.5 Flash (seção 7.5.3 do pré-projeto).
+ * Integração com a API do Gemini 3.6 Flash (seção 7.5.3 do pré-projeto).
  *
  * Usa Geração Controlada (responseMimeType + responseSchema) para
  * garantir que a resposta sempre venha em JSON válido, e temperature

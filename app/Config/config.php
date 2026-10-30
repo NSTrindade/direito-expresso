@@ -38,10 +38,13 @@ if (!isset($GLOBALS['__direitoExpressoConfig'])) {
     $GLOBALS['__direitoExpressoConfig'] = [
         'db' => [
             'host'    => getenv('DB_HOST') ?: '127.0.0.1',
+            'port'    => getenv('DB_PORT') ?: '3306',
             'name'    => getenv('DB_NAME') ?: 'totem_juridico',
             'user'    => getenv('DB_USER') ?: 'root',
             'pass'    => getenv('DB_PASS') ?: '',
             'charset' => 'utf8mb4',
+            'ssl'     => in_array(strtolower((string) getenv('DB_SSL')), ['1', 'true', 'yes'], true),
+            'ssl_ca'  => getenv('DB_SSL_CA') ?: '',
         ],
         'gemini' => [
             'api_key'  => getenv('GEMINI_API_KEY') ?: '',
