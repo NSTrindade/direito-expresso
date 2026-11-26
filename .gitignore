@@ -1,3 +1,5 @@
+# Nunca enviar para o GitHub: guarda a chave do Gemini e a senha do banco
 .env
 vendor
-Add-Content .gitignore "`npublic/teste-api.php"
+# página de teste local da API
+public/teste-api.php

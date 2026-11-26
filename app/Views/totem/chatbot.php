@@ -3,6 +3,7 @@
  * @var array|null $categoria
  * @var array $conversa
  * @var string|null $erroApi
+ * @var array|null $areaSugerida  ['codigo','nome','origem','enviadoAoTotem'] (ver TriagemController)
  */
 
 $tela = 'chatbot';
@@ -17,6 +18,28 @@ require __DIR__ . '/partials/layout-topo.php';
 
   <?php if ($erroApi): ?>
     <div class="alerta alerta-erro" style="max-width:640px;"><?= e($erroApi) ?></div>
+  <?php endif; ?>
+
+  <?php if (!empty($areaSugerida)): ?>
+    <div class="totem-area-sugerida" role="status"
+         data-esp32-area="<?= e($areaSugerida['codigo'] ?? 'INDEFINIDA') ?>"
+         data-esp32-enviado="<?= !empty($areaSugerida['enviadoAoTotem']) ? '1' : '0' ?>">
+      <?php if (!empty($areaSugerida['codigo'])): ?>
+        <div>
+          <strong>Área sugerida: <?= e($areaSugerida['nome']) ?></strong><br>
+          <?php $noTotem = !empty($areaSugerida['enviadoAoTotem']); ?>
+          <span data-esp32-texto="com-totem" <?= $noTotem ? '' : 'hidden' ?>>Toque no botão <b><?= e($areaSugerida['codigo']) ?></b> na telinha do totem para ver as orientações.</span>
+          <span data-esp32-texto="sem-totem" <?= $noTotem ? 'hidden' : '' ?>>Toque no botão ao lado para ver as orientações dessa área.</span>
+        </div>
+        <a class="totem-botao totem-botao-primario" href="totem.php?page=area&amp;codigo=<?= e($areaSugerida['codigo']) ?>">Ver <?= e($areaSugerida['nome']) ?> →</a>
+      <?php else: ?>
+        <div>
+          <strong>Ainda não deu para identificar a área.</strong><br>
+          Conte mais detalhes ou escolha uma das áreas na telinha do totem.
+        </div>
+        <a class="totem-botao totem-botao-secundario" href="totem.php?page=categorias">Ver áreas</a>
+      <?php endif; ?>
+    </div>
   <?php endif; ?>
 
   <div class="totem-chat">

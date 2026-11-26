@@ -1,7 +1,7 @@
 <?php
 /**
  * Front controller da versão TOTEM (Kiosk Mode).
- * Rotas: totem.php?page=inicio|categorias|duvidas|resultado|chatbot
+ * Rotas: totem.php?page=inicio|categorias|duvidas|resultado|chatbot|area
  */
 declare(strict_types=1);
 session_start();
@@ -18,6 +18,10 @@ switch ($pagina) {
 
     case 'duvidas':
         TriagemController::totemDuvidas();
+        break;
+
+    case 'area': // aberto pelos botões do ESP32 (ponte_esp32.py)
+        TriagemController::totemArea();
         break;
 
     case 'resultado':

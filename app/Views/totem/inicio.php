@@ -3,6 +3,9 @@ $tela = 'inicio';
 require __DIR__ . '/partials/layout-topo.php';
 ?>
 
+<?php /* marcador para o totem-esp32.js avisar a ponte quando o servidor não conseguir */ ?>
+<span hidden data-esp32-reset data-esp32-enviado="<?= !empty($esp32Resetado) ? '1' : '0' ?>"></span>
+
 <div class="totem-conteudo">
   <div class="totem-inicio">
     <div class="selo">DE</div>

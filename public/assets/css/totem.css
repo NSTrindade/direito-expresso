@@ -281,3 +281,21 @@ body.totem {
 .totem-chat-form button {
   min-height: 64px;
 }
+
+/* Aviso da área sugerida pela IA (integração com o ESP32) */
+.totem-area-sugerida {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 760px;
+  margin: 0 auto 16px;
+  padding: 16px 20px;
+  background: var(--cor-primaria-clara);
+  border-left: 8px solid var(--cor-primaria);
+  border-radius: 12px;
+  color: var(--cor-secundaria);
+  font-size: 1.05rem;
+  line-height: 1.4;
+}
+.totem-area-sugerida .totem-botao { white-space: nowrap; }

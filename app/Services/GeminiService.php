@@ -1,6 +1,8 @@
 <?php
 /**
- * Integração com a API do Gemini 3.6 Flash (seção 7.5.3 do pré-projeto).
+ * Integração com a API do Gemini (seção 7.5.3 do pré-projeto).
+ * O Gemini 1.5 Flash foi desligado pelo Google em set/2025; o modelo agora
+ * vem de GEMINI_MODEL no .env (padrão: gemini-3.6-flash).
  *
  * Usa Geração Controlada (responseMimeType + responseSchema) para
  * garantir que a resposta sempre venha em JSON válido, e temperature
@@ -51,13 +53,14 @@ class GeminiService
      *   orgao_sugerido: string,
      * }
      */
-    public function traduzir(string $relatoCidadao, ?string $categoriaContexto = null): array
+    public function traduzir(string $relatoCidadao, ?string $categoriaContexto = null, array $categoriasDisponiveis = []): array
     {
-        if ($this->apiKey === '') {
+        // a chave de exemplo do .env.example conta como "sem chave"
+        if ($this->apiKey === '' || str_starts_with($this->apiKey, 'coloque_')) {
             throw new GeminiServiceException('GEMINI_API_KEY não configurada no .env.');
         }
 
-        $payload = $this->montarPayload($relatoCidadao, $categoriaContexto);
+        $payload = $this->montarPayload($relatoCidadao, $categoriaContexto, $categoriasDisponiveis);
         $url = sprintf($this->endpointTemplate, $this->model, $this->apiKey);
 
         $ch = curl_init($url);
@@ -75,13 +78,11 @@ class GeminiService
         curl_close($ch);
 
         if ($respostaBruta === false || $respostaBruta === '') {
-            echo "ERRO DE CONEXÃO (cURL): " . $erroCurl;
-            exit;
+            throw new GeminiServiceException("Falha de conexão com a API do Gemini: {$erroCurl}");
         }
 
         if ($httpCode !== 200) {
-            echo "ERRO DO GEMINI (HTTP " . $httpCode . "): " . $respostaBruta;
-            exit;
+            throw new GeminiServiceException("Gemini retornou HTTP {$httpCode}: {$respostaBruta}");
         }
 
         $resposta = json_decode($respostaBruta, true);
@@ -108,8 +109,13 @@ class GeminiService
         return $traducao;
     }
 
-    private function montarSystemInstruction(): string
+    private function montarSystemInstruction(array $categoriasDisponiveis = []): string
     {
+        // As categorias vêm do banco: cadastrar uma categoria nova no painel já a coloca aqui.
+        $listaCategorias = $categoriasDisponiveis
+            ? implode(', ', $categoriasDisponiveis)
+            : 'Consumidor, Civil, Trabalho, Moradia, Serviços Públicos';
+
         return 'Você é o motor de tradução jurídica do sistema público "Direito Expresso". '
              . 'Você aplica os eixos do Pacto Nacional do Judiciário pela Linguagem Simples (CNJ). '
              . 'Você NÃO é advogado, não emite parecer de risco processual e não inventa leis, artigos '
@@ -117,14 +123,15 @@ class GeminiService
              . '(1) identificar o termo ou situação jurídica central do relato do cidadão; '
              . '(2) traduzir esse termo para um português coloquial, curto, sem jargão; '
              . '(3) sugerir um próximo passo prático e realista; '
-             . '(4) indicar a categoria do problema (Consumidor, Trabalho, Moradia, Serviços Públicos ou Outro) '
+             . "(4) indicar a categoria do problema, escrevendo exatamente um destes nomes: {$listaCategorias} ou Outro "
+             . '(Civil = contratos e dívidas entre pessoas, indenizações, acidentes, família e herança) '
              . 'e o nome de um órgão público real do Brasil mais adequado para buscar ajuda '
              . '(ex: Procon, Defensoria Pública, Justiça do Trabalho, Juizado Especial Cível). '
              . 'Se o relato for ambíguo ou não parecer uma questão jurídica, responda com honestidade '
              . 'mesmo assim, sugerindo a categoria "Outro" e indicando a Defensoria Pública em caso de dúvida.';
     }
 
-    private function montarPayload(string $relatoCidadao, ?string $categoriaContexto): array
+    private function montarPayload(string $relatoCidadao, ?string $categoriaContexto, array $categoriasDisponiveis = []): array
     {
         $contexto = $categoriaContexto
             ? "Categoria já selecionada pelo cidadão no totem: {$categoriaContexto}.\n"
@@ -132,7 +139,7 @@ class GeminiService
 
         return [
             'system_instruction' => [
-                'parts' => [['text' => $this->montarSystemInstruction()]],
+                'parts' => [['text' => $this->montarSystemInstruction($categoriasDisponiveis)]],
             ],
             'contents' => [
                 [

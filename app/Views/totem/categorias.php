@@ -8,6 +8,7 @@ require __DIR__ . '/partials/layout-topo.php';
 
 $estiloCategoria = [
     'Consumidor'        => '🛒',
+    'Civil'             => '📄',
     'Trabalho'          => '💼',
     'Moradia'           => '🏠',
     'Serviços Públicos' => '🏛️',

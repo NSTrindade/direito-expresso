@@ -5,11 +5,6 @@
 -- Compatível com MySQL 5.7+ / MariaDB (XAMPP).
 -- =====================================================================
 
-CREATE DATABASE IF NOT EXISTS totem_juridico
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-
-USE totem_juridico;
 
 -- ---------------------------------------------------------------------
 -- Categoria: classifica Lei e TermoJuridico (1,1 obrigatório em ambas)
