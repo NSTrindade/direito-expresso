@@ -61,41 +61,51 @@ class GeminiService
         }
 
         $payload = $this->montarPayload($relatoCidadao, $categoriaContexto, $categoriasDisponiveis);
-        $url = sprintf($this->endpointTemplate, $this->model, $this->apiKey);
+        $corpo = json_encode($payload, JSON_UNESCAPED_UNICODE);
 
-        // Gemini sobrecarregado (503), limite por minuto (429) ou erro interno (500):
-        // espera um pouco e tenta de novo, no máximo 3 vezes.
-        $tentativa = 0;
-        do {
-            if ($tentativa > 0) {
-                sleep(2 * $tentativa);
+        // Fila de modelos: o principal (GEMINI_MODEL) e, se ele estiver lotado
+        // ("high demand", HTTP 503), com limite atingido (429), fora do ar (500)
+        // ou inexistente (404), os modelos reserva — por padrão os Flash estáveis
+        // mais leves. Troque a fila em GEMINI_MODELOS_RESERVA (separados por vírgula).
+        $reservas = getenv('GEMINI_MODELOS_RESERVA') ?: 'gemini-3.5-flash-lite,gemini-3.5-flash,gemini-3.1-flash-lite';
+        $modelos = array_values(array_unique(array_filter(array_map('trim',
+            array_merge([$this->model], explode(',', $reservas))))));
+
+        // Tempo total que o cidadão espera, somando todas as tentativas.
+        $prazo = microtime(true) + 50;
+        $erros = [];
+        $respostaBruta = null;
+
+        foreach ($modelos as $modelo) {
+            $restante = (int) floor($prazo - microtime(true));
+            if ($restante < 5) {
+                break;
             }
-            $tentativa++;
+            [$httpCode, $respostaBruta, $erroCurl] = $this->chamarModelo($modelo, $corpo, min(25, $restante));
 
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST           => true,
-            CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
-            CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE),
-            // Os modelos Gemini 3 "pensam" antes de responder: relatos reais
-            // podem passar de 15 s. 40 s evita a falsa "assistente indisponível".
-            CURLOPT_CONNECTTIMEOUT => 10,
-            CURLOPT_TIMEOUT        => 40,
-        ]);
+            // Lotado agora: uma segunda chance rápida no mesmo modelo antes de trocar.
+            if (in_array($httpCode, [429, 503], true) && $prazo - microtime(true) > 8) {
+                sleep(2);
+                [$httpCode, $respostaBruta, $erroCurl] = $this->chamarModelo($modelo, $corpo, min(20, (int) floor($prazo - microtime(true))));
+            }
 
-        $respostaBruta = curl_exec($ch);
-        $erroCurl = curl_error($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        } while (in_array($httpCode, [429, 500, 503], true) && $tentativa < 3);
+            if ($httpCode === 200 && $respostaBruta) {
+                break;
+            }
 
-        if ($respostaBruta === false || $respostaBruta === '') {
-            throw new GeminiServiceException("Falha de conexão com a API do Gemini: {$erroCurl}");
+            $erros[] = $respostaBruta === false || $respostaBruta === ''
+                ? "{$modelo}: falha de conexão ({$erroCurl})"
+                : "{$modelo}: HTTP {$httpCode} " . self::mensagemDeErro((string) $respostaBruta);
+            $respostaBruta = null;
+
+            // Erros que outro modelo não resolve (chave inválida, pedido malformado): para aqui.
+            if (in_array($httpCode, [400, 401, 403], true)) {
+                break;
+            }
         }
 
-        if ($httpCode !== 200) {
-            throw new GeminiServiceException("Gemini retornou HTTP {$httpCode}: {$respostaBruta}");
+        if ($respostaBruta === null) {
+            throw new GeminiServiceException('Gemini indisponível — ' . implode(' | ', $erros));
         }
 
         $resposta = json_decode($respostaBruta, true);
@@ -127,6 +137,35 @@ class GeminiService
         }
 
         return $traducao;
+    }
+
+    /** Faz uma chamada a um modelo. Devolve [código HTTP, corpo da resposta, erro do curl]. */
+    private function chamarModelo(string $modelo, string $corpo, int $timeout): array
+    {
+        $url = sprintf($this->endpointTemplate, rawurlencode($modelo), $this->apiKey);
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+            CURLOPT_POSTFIELDS     => $corpo,
+            CURLOPT_CONNECTTIMEOUT => 10,
+            // Os modelos Gemini 3 "pensam" antes de responder: relatos reais
+            // podem levar mais de 15 s.
+            CURLOPT_TIMEOUT        => max(5, $timeout),
+        ]);
+        $respostaBruta = curl_exec($ch);
+        $erroCurl = curl_error($ch);
+        $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        return [$httpCode, $respostaBruta, $erroCurl];
+    }
+
+    /** Pega só o campo "message" do erro do Gemini, para o log ficar curto. */
+    private static function mensagemDeErro(string $corpo): string
+    {
+        $json = json_decode($corpo, true);
+        return mb_substr((string) ($json['error']['message'] ?? $corpo), 0, 160, 'UTF-8');
     }
 
     private function montarSystemInstruction(array $categoriasDisponiveis = []): string
