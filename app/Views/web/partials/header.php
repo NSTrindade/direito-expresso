@@ -8,6 +8,7 @@ $paginaAtiva = $paginaAtiva ?? 'home';
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Direito Expresso — Consulta jurídica simplificada</title>
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/web.css">
 </head>
@@ -15,7 +16,7 @@ $paginaAtiva = $paginaAtiva ?? 'home';
   <header class="cabecalho">
     <div class="container">
       <a href="index.php" class="marca">
-        <span class="marca-icone">DE</span>
+        <span class="marca-icone"><?php require dirname(__DIR__, 2) . '/logo-simbolo.php'; ?></span>
         <span class="marca-texto">
           <strong>Direito Expresso</strong>
           <span>Consulta jurídica simplificada</span>

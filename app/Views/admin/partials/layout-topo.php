@@ -23,6 +23,7 @@ $itensMenu = [
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= e($tituloPagina) ?> — Painel Direito Expresso</title>
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/admin.css">
 </head>

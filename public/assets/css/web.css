@@ -27,6 +27,7 @@
 }
 
 .marca-icone {
+  --logo-fundo: var(--cor-secundaria);
   width: 42px;
   height: 42px;
   border-radius: 10px;
@@ -350,3 +351,6 @@
     flex-direction: column;
   }
 }
+
+/* Símbolo (balão com balança) dentro do quadrado do cabeçalho */
+.marca-icone .logo-simbolo { width: 30px; height: 30px; display: block; }

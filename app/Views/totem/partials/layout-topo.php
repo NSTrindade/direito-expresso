@@ -15,6 +15,7 @@ $config = require dirname(__DIR__, 3) . '/Config/config.php';
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Direito Expresso — Totem</title>
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/totem.css">
   <script>window.TOTEM_TIMEOUT_SEGUNDOS = <?= (int) $config['app']['totem_timeout_segundos'] ?>;</script>
