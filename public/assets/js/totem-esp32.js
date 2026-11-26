@@ -45,9 +45,18 @@
   }
 
   // ---- ESP32 -> site
+  // O Chrome/Edge só libera o acesso de um site da internet ao próprio computador
+  // depois de um fetch (que pede a permissão "rede local"). Por isso a página
+  // primeiro consulta /status e só então abre o canal de eventos; se o canal cair,
+  // repete o processo a cada 3 segundos.
+  var fonte = null;
   function escutarPonte() {
     if (!window.EventSource) return;
-    var fonte = new EventSource(PONTE + '/eventos');
+    fetch(PONTE + '/status').catch(function () {}).then(abrirCanal);
+  }
+  function abrirCanal() {
+    if (fonte) fonte.close();
+    fonte = new EventSource(PONTE + '/eventos');
     fonte.addEventListener('navegar', function (evento) {
       var dados;
       try { dados = JSON.parse(evento.data); } catch (e) { return; }
@@ -56,7 +65,10 @@
       }
     });
     fonte.onerror = function () {
-      // O EventSource tenta reconectar sozinho (ex.: ponte iniciada depois do navegador).
+      if (fonte.readyState === EventSource.CLOSED) {
+        setTimeout(escutarPonte, 3000);   // ponte desligada ou acesso ainda bloqueado
+      }
+      // readyState CONNECTING: o próprio EventSource tenta de novo
     };
   }
 

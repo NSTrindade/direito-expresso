@@ -149,6 +149,11 @@ body.totem {
 
 /* --- Botões gigantes de ação --- */
 .totem-botao {
+  /* centraliza o texto também nos botões que são links (<a>) */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
   min-height: 92px;
   padding: 0 48px;
   font-size: 1.4rem;
@@ -298,4 +303,15 @@ body.totem {
   font-size: 1.05rem;
   line-height: 1.4;
 }
-.totem-area-sugerida .totem-botao { white-space: nowrap; }
+.totem-area-sugerida > div { text-align: left; }
+.totem-area-sugerida .totem-botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-height: 60px;
+  padding: 0 28px;
+  font-size: 1.05rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
