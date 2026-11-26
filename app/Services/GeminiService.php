@@ -69,7 +69,10 @@ class GeminiService
             CURLOPT_POST           => true,
             CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
             CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE),
-            CURLOPT_TIMEOUT        => 15,
+            // Os modelos Gemini 3 "pensam" antes de responder: relatos reais
+            // podem passar de 15 s. 40 s evita a falsa "assistente indisponível".
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_TIMEOUT        => 40,
         ]);
 
         $respostaBruta = curl_exec($ch);
@@ -86,7 +89,14 @@ class GeminiService
         }
 
         $resposta = json_decode($respostaBruta, true);
-        $textoJson = $resposta['candidates'][0]['content']['parts'][0]['text'] ?? null;
+        // A resposta pode vir dividida em várias "parts" (ex.: assinatura do raciocínio
+        // + texto). Junta todo o texto, em vez de ler só a primeira.
+        $textoJson = null;
+        foreach ($resposta['candidates'][0]['content']['parts'] ?? [] as $parte) {
+            if (isset($parte['text']) && empty($parte['thought'])) {
+                $textoJson = ($textoJson ?? '') . $parte['text'];
+            }
+        }
 
         if ($textoJson === null) {
             throw new GeminiServiceException('Resposta do Gemini em formato inesperado (sem candidates[0]).');
