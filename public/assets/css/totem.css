@@ -149,6 +149,11 @@ body.totem {
 
 /* --- Botões gigantes de ação --- */
 .totem-botao {
+  /* centraliza o texto também nos botões que são links (<a>) */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
   min-height: 92px;
   padding: 0 48px;
   font-size: 1.4rem;
@@ -280,4 +285,33 @@ body.totem {
 
 .totem-chat-form button {
   min-height: 64px;
+}
+
+/* Aviso da área sugerida pela IA (integração com o ESP32) */
+.totem-area-sugerida {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 760px;
+  margin: 0 auto 16px;
+  padding: 16px 20px;
+  background: var(--cor-primaria-clara);
+  border-left: 8px solid var(--cor-primaria);
+  border-radius: 12px;
+  color: var(--cor-secundaria);
+  font-size: 1.05rem;
+  line-height: 1.4;
+}
+.totem-area-sugerida > div { text-align: left; }
+.totem-area-sugerida .totem-botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-height: 60px;
+  padding: 0 28px;
+  font-size: 1.05rem;
+  text-decoration: none;
+  white-space: nowrap;
 }

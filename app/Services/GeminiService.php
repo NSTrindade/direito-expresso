@@ -1,6 +1,8 @@
 <?php
 /**
- * Integração com a API do Gemini 3.6 Flash (seção 7.5.3 do pré-projeto).
+ * Integração com a API do Gemini (seção 7.5.3 do pré-projeto).
+ * O Gemini 1.5 Flash foi desligado pelo Google em set/2025; o modelo agora
+ * vem de GEMINI_MODEL no .env (padrão: gemini-3.6-flash).
  *
  * Usa Geração Controlada (responseMimeType + responseSchema) para
  * garantir que a resposta sempre venha em JSON válido, e temperature
@@ -51,14 +53,24 @@ class GeminiService
      *   orgao_sugerido: string,
      * }
      */
-    public function traduzir(string $relatoCidadao, ?string $categoriaContexto = null): array
+    public function traduzir(string $relatoCidadao, ?string $categoriaContexto = null, array $categoriasDisponiveis = []): array
     {
-        if ($this->apiKey === '') {
+        // a chave de exemplo do .env.example conta como "sem chave"
+        if ($this->apiKey === '' || str_starts_with($this->apiKey, 'coloque_')) {
             throw new GeminiServiceException('GEMINI_API_KEY não configurada no .env.');
         }
 
-        $payload = $this->montarPayload($relatoCidadao, $categoriaContexto);
+        $payload = $this->montarPayload($relatoCidadao, $categoriaContexto, $categoriasDisponiveis);
         $url = sprintf($this->endpointTemplate, $this->model, $this->apiKey);
+
+        // Gemini sobrecarregado (503), limite por minuto (429) ou erro interno (500):
+        // espera um pouco e tenta de novo, no máximo 3 vezes.
+        $tentativa = 0;
+        do {
+            if ($tentativa > 0) {
+                sleep(2 * $tentativa);
+            }
+            $tentativa++;
 
         $ch = curl_init($url);
         curl_setopt_array($ch, [
@@ -66,26 +78,35 @@ class GeminiService
             CURLOPT_POST           => true,
             CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
             CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE),
-            CURLOPT_TIMEOUT        => 15,
+            // Os modelos Gemini 3 "pensam" antes de responder: relatos reais
+            // podem passar de 15 s. 40 s evita a falsa "assistente indisponível".
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_TIMEOUT        => 40,
         ]);
 
         $respostaBruta = curl_exec($ch);
         $erroCurl = curl_error($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
+        } while (in_array($httpCode, [429, 500, 503], true) && $tentativa < 3);
 
         if ($respostaBruta === false || $respostaBruta === '') {
-            echo "ERRO DE CONEXÃO (cURL): " . $erroCurl;
-            exit;
+            throw new GeminiServiceException("Falha de conexão com a API do Gemini: {$erroCurl}");
         }
 
         if ($httpCode !== 200) {
-            echo "ERRO DO GEMINI (HTTP " . $httpCode . "): " . $respostaBruta;
-            exit;
+            throw new GeminiServiceException("Gemini retornou HTTP {$httpCode}: {$respostaBruta}");
         }
 
         $resposta = json_decode($respostaBruta, true);
-        $textoJson = $resposta['candidates'][0]['content']['parts'][0]['text'] ?? null;
+        // A resposta pode vir dividida em várias "parts" (ex.: assinatura do raciocínio
+        // + texto). Junta todo o texto, em vez de ler só a primeira.
+        $textoJson = null;
+        foreach ($resposta['candidates'][0]['content']['parts'] ?? [] as $parte) {
+            if (isset($parte['text']) && empty($parte['thought'])) {
+                $textoJson = ($textoJson ?? '') . $parte['text'];
+            }
+        }
 
         if ($textoJson === null) {
             throw new GeminiServiceException('Resposta do Gemini em formato inesperado (sem candidates[0]).');
@@ -108,8 +129,13 @@ class GeminiService
         return $traducao;
     }
 
-    private function montarSystemInstruction(): string
+    private function montarSystemInstruction(array $categoriasDisponiveis = []): string
     {
+        // As categorias vêm do banco: cadastrar uma categoria nova no painel já a coloca aqui.
+        $listaCategorias = $categoriasDisponiveis
+            ? implode(', ', $categoriasDisponiveis)
+            : 'Consumidor, Civil, Trabalho, Moradia, Serviços Públicos';
+
         return 'Você é o motor de tradução jurídica do sistema público "Direito Expresso". '
              . 'Você aplica os eixos do Pacto Nacional do Judiciário pela Linguagem Simples (CNJ). '
              . 'Você NÃO é advogado, não emite parecer de risco processual e não inventa leis, artigos '
@@ -117,14 +143,15 @@ class GeminiService
              . '(1) identificar o termo ou situação jurídica central do relato do cidadão; '
              . '(2) traduzir esse termo para um português coloquial, curto, sem jargão; '
              . '(3) sugerir um próximo passo prático e realista; '
-             . '(4) indicar a categoria do problema (Consumidor, Trabalho, Moradia, Serviços Públicos ou Outro) '
+             . "(4) indicar a categoria do problema, escrevendo exatamente um destes nomes: {$listaCategorias} ou Outro "
+             . '(Civil = contratos e dívidas entre pessoas, indenizações, acidentes, família e herança) '
              . 'e o nome de um órgão público real do Brasil mais adequado para buscar ajuda '
              . '(ex: Procon, Defensoria Pública, Justiça do Trabalho, Juizado Especial Cível). '
              . 'Se o relato for ambíguo ou não parecer uma questão jurídica, responda com honestidade '
              . 'mesmo assim, sugerindo a categoria "Outro" e indicando a Defensoria Pública em caso de dúvida.';
     }
 
-    private function montarPayload(string $relatoCidadao, ?string $categoriaContexto): array
+    private function montarPayload(string $relatoCidadao, ?string $categoriaContexto, array $categoriasDisponiveis = []): array
     {
         $contexto = $categoriaContexto
             ? "Categoria já selecionada pelo cidadão no totem: {$categoriaContexto}.\n"
@@ -132,7 +159,7 @@ class GeminiService
 
         return [
             'system_instruction' => [
-                'parts' => [['text' => $this->montarSystemInstruction()]],
+                'parts' => [['text' => $this->montarSystemInstruction($categoriasDisponiveis)]],
             ],
             'contents' => [
                 [
