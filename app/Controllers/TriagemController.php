@@ -153,10 +153,13 @@ class TriagemController
             'categoria' => $categoria,
             'conversa' => $_SESSION['totem_chat'] ?? [],
             'erroApi' => $_SESSION['totem_chat_erro'] ?? null,
+            // motivo técnico do erro da IA: só aparece fora de APP_ENV=production
+            'erroDetalhe' => (getenv('APP_ENV') ?: 'development') !== 'production'
+                ? ($_SESSION['totem_chat_erro_detalhe'] ?? null) : null,
             'areaSugerida' => $_SESSION['totem_area'] ?? null,
         ]);
 
-        unset($_SESSION['totem_chat_erro']);
+        unset($_SESSION['totem_chat_erro'], $_SESSION['totem_chat_erro_detalhe']);
     }
 
     /**
@@ -232,6 +235,7 @@ class TriagemController
                 // Fluxo Alternativo do RF_03: avisa e sugere voltar pra consulta textual.
                 $_SESSION['totem_chat_erro'] = 'A assistente virtual está temporariamente indisponível. '
                     . 'Tente novamente em instantes ou volte para a lista de dúvidas.';
+                $_SESSION['totem_chat_erro_detalhe'] = self::resumirErro($e->getMessage());
                 $_SESSION['totem_chat'][] = [
                     'autor' => 'ia',
                     'texto' => '⚠️ Não consegui me conectar à inteligência artificial agora. '
@@ -262,6 +266,18 @@ class TriagemController
      * código ao ESP32, que passa a mostrar o botão daquela área.
      * $codigo null = não deu para identificar (ESP32 mostra as 4 áreas).
      */
+    /** Resume a mensagem de erro do Gemini (sem chave) para exibir em letra pequena. */
+    private static function resumirErro(string $mensagem): string
+    {
+        if (preg_match('/"message"\s*:\s*"([^"]+)"/', $mensagem, $m)) {
+            preg_match('/HTTP \d{3}/', $mensagem, $h);
+            $mensagem = trim(($h[0] ?? '') . ' ' . $m[1]);
+        }
+        $mensagem = preg_replace('/(AIza|AQ\.)[A-Za-z0-9_.\-]+/', '[chave]', $mensagem);
+        $mensagem = preg_replace('/\s+/', ' ', $mensagem);
+        return mb_substr($mensagem, 0, 220, 'UTF-8');
+    }
+
     private static function sugerirAreaNoTotem(?string $codigo, string $origem): void
     {
         $_SESSION['totem_area'] = [

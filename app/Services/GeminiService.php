@@ -63,6 +63,15 @@ class GeminiService
         $payload = $this->montarPayload($relatoCidadao, $categoriaContexto, $categoriasDisponiveis);
         $url = sprintf($this->endpointTemplate, $this->model, $this->apiKey);
 
+        // Gemini sobrecarregado (503), limite por minuto (429) ou erro interno (500):
+        // espera um pouco e tenta de novo, no máximo 3 vezes.
+        $tentativa = 0;
+        do {
+            if ($tentativa > 0) {
+                sleep(2 * $tentativa);
+            }
+            $tentativa++;
+
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
@@ -79,6 +88,7 @@ class GeminiService
         $erroCurl = curl_error($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
+        } while (in_array($httpCode, [429, 500, 503], true) && $tentativa < 3);
 
         if ($respostaBruta === false || $respostaBruta === '') {
             throw new GeminiServiceException("Falha de conexão com a API do Gemini: {$erroCurl}");

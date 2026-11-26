@@ -3,6 +3,7 @@
  * @var array|null $categoria
  * @var array $conversa
  * @var string|null $erroApi
+ * @var string|null $erroDetalhe  motivo técnico (só fora de produção)
  * @var array|null $areaSugerida  ['codigo','nome','origem','enviadoAoTotem'] (ver TriagemController)
  */
 
@@ -17,7 +18,11 @@ require __DIR__ . '/partials/layout-topo.php';
   <p class="totem-subtitulo">Conte o que aconteceu com suas palavras. Vamos traduzir e indicar o que fazer.</p>
 
   <?php if ($erroApi): ?>
-    <div class="alerta alerta-erro" style="max-width:640px;"><?= e($erroApi) ?></div>
+    <div class="alerta alerta-erro" style="max-width:640px;"><?= e($erroApi) ?>
+      <?php if (!empty($erroDetalhe)): ?>
+        <br><small style="opacity:.75;font-weight:400;">Detalhe técnico: <?= e($erroDetalhe) ?></small>
+      <?php endif; ?>
+    </div>
   <?php endif; ?>
 
   <?php if (!empty($areaSugerida)): ?>
