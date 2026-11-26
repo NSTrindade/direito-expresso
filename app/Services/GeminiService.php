@@ -53,14 +53,14 @@ class GeminiService
      *   orgao_sugerido: string,
      * }
      */
-    public function traduzir(string $relatoCidadao, ?string $categoriaContexto = null, array $categoriasDisponiveis = []): array
+    public function traduzir(string $relatoCidadao, ?string $categoriaContexto = null, array $categoriasDisponiveis = [], array $leisCadastradas = []): array
     {
         // a chave de exemplo do .env.example conta como "sem chave"
         if ($this->apiKey === '' || str_starts_with($this->apiKey, 'coloque_')) {
             throw new GeminiServiceException('GEMINI_API_KEY não configurada no .env.');
         }
 
-        $payload = $this->montarPayload($relatoCidadao, $categoriaContexto, $categoriasDisponiveis);
+        $payload = $this->montarPayload($relatoCidadao, $categoriaContexto, $categoriasDisponiveis, $leisCadastradas);
         $corpo = json_encode($payload, JSON_UNESCAPED_UNICODE);
 
         // Fila de modelos: o principal (GEMINI_MODEL) e, se ele estiver lotado
@@ -140,6 +140,9 @@ class GeminiService
             throw new GeminiServiceException('JSON da tradução veio malformado ou incompleto.');
         }
 
+        // Base legal: lista de normas; aceita só itens com número de norma reconhecível.
+        $traducao['base_legal'] = self::filtrarBaseLegal($traducao['base_legal'] ?? []);
+
         return $traducao;
     }
 
@@ -172,8 +175,33 @@ class GeminiService
         return mb_substr((string) ($json['error']['message'] ?? $corpo), 0, 160, 'UTF-8');
     }
 
-    private function montarSystemInstruction(array $categoriasDisponiveis = []): string
+    /** Mantém no máximo 3 normas com número de norma brasileira reconhecível. */
+    private static function filtrarBaseLegal($lista): array
     {
+        $validas = [];
+        foreach (is_array($lista) ? $lista : [] as $item) {
+            $numero = trim((string) ($item['numero_lei'] ?? ''));
+            if ($numero === '' || !preg_match('/\b(Lei|Decreto|Constitui|C[oó]digo|Medida Provis|Emenda)/iu', $numero)) {
+                continue;
+            }
+            $validas[mb_strtolower($numero, 'UTF-8')] = [
+                'numero_lei' => mb_substr($numero, 0, 50, 'UTF-8'),
+                'tipo_norma' => mb_substr(trim((string) ($item['tipo_norma'] ?? 'Lei Federal')) ?: 'Lei Federal', 0, 50, 'UTF-8'),
+                'ementa'     => trim((string) ($item['ementa'] ?? '')),
+            ];
+        }
+        return array_slice(array_values($validas), 0, 3);
+    }
+
+    private function montarSystemInstruction(array $categoriasDisponiveis = [], array $leisCadastradas = []): string
+    {
+        // Leis já cadastradas pelo painel: a IA deve preferir estas (mesmo texto),
+        // para reaproveitar o cadastro em vez de criar duplicatas.
+        $listaLeis = $leisCadastradas
+            ? 'Leis já cadastradas no sistema (prefira estas, escrevendo o número exatamente igual): '
+              . implode('; ', $leisCadastradas) . '. '
+            : '';
+
         // As categorias vêm do banco: cadastrar uma categoria nova no painel já a coloca aqui.
         $listaCategorias = $categoriasDisponiveis
             ? implode(', ', $categoriasDisponiveis)
@@ -190,11 +218,16 @@ class GeminiService
              . '(Civil = contratos e dívidas entre pessoas, indenizações, acidentes, família e herança) '
              . 'e o nome de um órgão público real do Brasil mais adequado para buscar ajuda '
              . '(ex: Procon, Defensoria Pública, Justiça do Trabalho, Juizado Especial Cível). '
+             . '(5) indicar a base legal: de 1 a 3 normas brasileiras em vigor que fundamentam a orientação, '
+             . 'cada uma com numero_lei no formato oficial (ex: "Lei nº 8.078/1990", "Decreto-Lei nº 5.452/1943", '
+             . '"Constituição Federal"), tipo_norma (ex: "Lei Federal") e ementa curta (ex: "Código de Defesa do Consumidor"). '
+             . $listaLeis
+             . 'Cite somente normas que você tem certeza que existem; nunca invente números de lei. '
              . 'Se o relato for ambíguo ou não parecer uma questão jurídica, responda com honestidade '
              . 'mesmo assim, sugerindo a categoria "Outro" e indicando a Defensoria Pública em caso de dúvida.';
     }
 
-    private function montarPayload(string $relatoCidadao, ?string $categoriaContexto, array $categoriasDisponiveis = []): array
+    private function montarPayload(string $relatoCidadao, ?string $categoriaContexto, array $categoriasDisponiveis = [], array $leisCadastradas = []): array
     {
         $contexto = $categoriaContexto
             ? "Categoria já selecionada pelo cidadão no totem: {$categoriaContexto}.\n"
@@ -202,7 +235,7 @@ class GeminiService
 
         return [
             'system_instruction' => [
-                'parts' => [['text' => $this->montarSystemInstruction($categoriasDisponiveis)]],
+                'parts' => [['text' => $this->montarSystemInstruction($categoriasDisponiveis, $leisCadastradas)]],
             ],
             'contents' => [
                 [
@@ -221,6 +254,18 @@ class GeminiService
                         'proximo_passo_sugerido' => ['type' => 'STRING'],
                         'categoria_sugerida'     => ['type' => 'STRING'],
                         'orgao_sugerido'         => ['type' => 'STRING'],
+                        'base_legal'             => [
+                            'type'  => 'ARRAY',
+                            'items' => [
+                                'type'       => 'OBJECT',
+                                'properties' => [
+                                    'numero_lei' => ['type' => 'STRING'],
+                                    'tipo_norma' => ['type' => 'STRING'],
+                                    'ementa'     => ['type' => 'STRING'],
+                                ],
+                                'required' => ['numero_lei', 'tipo_norma', 'ementa'],
+                            ],
+                        ],
                     ],
                     'required' => [
                         'termo_identificado',
@@ -228,6 +273,7 @@ class GeminiService
                         'proximo_passo_sugerido',
                         'categoria_sugerida',
                         'orgao_sugerido',
+                        'base_legal',
                     ],
                 ],
             ],

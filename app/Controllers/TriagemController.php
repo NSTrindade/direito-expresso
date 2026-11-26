@@ -187,7 +187,8 @@ class TriagemController
 
         if ($termoCache) {
             $idTermo = (int) $termoCache['idTermo'];
-            $textoResposta = $termoCache['explicacaoColoquial'] . "\n\n👉 " . $termoCache['proxPassoSugerido'];
+            $textoResposta = $termoCache['explicacaoColoquial'] . "\n\n👉 " . $termoCache['proxPassoSugerido']
+                . self::textoBaseLegal($idTermo);
 
             $categoriaDoTermo = Categoria::find((int) $termoCache['idCategoria']);
             self::sugerirAreaNoTotem(Esp32Ponte::codigoPorNome($categoriaDoTermo['nome'] ?? null), 'cadastro');
@@ -197,7 +198,11 @@ class TriagemController
                 $traducao = $gemini->traduzir(
                     $relato,
                     $categoria['nome'] ?? null,
-                    array_column(Categoria::all(), 'nome')
+                    array_column(Categoria::all(), 'nome'),
+                    array_map(
+                        fn($lei) => $lei['numeroLei'] . ' (' . $lei['ementa'] . ')',
+                        Lei::all()
+                    )
                 );
 
                 $idCategoriaResolvida = self::resolverIdCategoria($traducao['categoria_sugerida'], $idCategoria);
@@ -219,8 +224,12 @@ class TriagemController
                     TermoJuridico::linkOrgao($idTermo, (int) $orgao['idOrgao']);
                 }
 
+                // Base legal sugerida pela IA: reaproveita a lei já cadastrada ou cadastra, e liga ao termo
+                self::vincularBaseLegal($idTermo, $idCategoriaResolvida, $traducao['base_legal'] ?? []);
+
                 $textoResposta = $traducao['explicacao_coloquial'] . "\n\n👉 " . $traducao['proximo_passo_sugerido']
-                    . "\n\n📍 Procure: " . $traducao['orgao_sugerido'];
+                    . "\n\n📍 Procure: " . $traducao['orgao_sugerido']
+                    . self::textoBaseLegal($idTermo);
 
                 self::sugerirAreaNoTotem(Esp32Ponte::codigoPorNome($traducao['categoria_sugerida']), 'ia');
             } catch (GeminiServiceException $e) {
@@ -266,6 +275,60 @@ class TriagemController
      * código ao ESP32, que passa a mostrar o botão daquela área.
      * $codigo null = não deu para identificar (ESP32 mostra as 4 áreas).
      */
+    /**
+     * Liga ao termo as normas que a IA indicou. Se a norma já existe (mesmo número,
+     * ignorando espaços, "nº" e maiúsculas), reaproveita; senão cadastra na tabela Lei.
+     * Nunca derruba o chat: qualquer falha só vai para o log.
+     */
+    private static function vincularBaseLegal(int $idTermo, int $idCategoria, array $baseLegal): void
+    {
+        if (!$baseLegal) {
+            return;
+        }
+        try {
+            $existentes = [];
+            foreach (Lei::all() as $lei) {
+                $existentes[self::chaveLei($lei['numeroLei'])] = (int) $lei['idLei'];
+            }
+            foreach ($baseLegal as $norma) {
+                $chave = self::chaveLei($norma['numero_lei']);
+                $idLei = $existentes[$chave] ?? Lei::create(
+                    $idCategoria,
+                    $norma['numero_lei'],
+                    $norma['tipo_norma'],
+                    $norma['ementa'] !== '' ? $norma['ementa'] : $norma['numero_lei'],
+                    null
+                );
+                $existentes[$chave] = $idLei;
+                TermoJuridico::linkLei($idTermo, $idLei);
+            }
+        } catch (Throwable $e) {
+            error_log('[Direito Expresso] Base legal não salva: ' . $e->getMessage());
+        }
+    }
+
+    /** "Lei nº 8.078/1990" e "lei n. 8078/1990" viram a mesma chave. */
+    private static function chaveLei(string $numero): string
+    {
+        $t = mb_strtolower($numero, 'UTF-8');
+        $t = str_replace(['nº', 'n°', 'n.º', 'n.', 'no '], '', $t);
+        return preg_replace('/[^a-z0-9\/]/u', '', strtr($t, ['ç' => 'c', 'ã' => 'a', 'í' => 'i', 'ó' => 'o', 'é' => 'e']));
+    }
+
+    /** Linha "Base legal" para a resposta do chat, com as leis ligadas ao termo. */
+    private static function textoBaseLegal(int $idTermo): string
+    {
+        $leis = TermoJuridico::getLeis($idTermo);
+        if (!$leis) {
+            return '';
+        }
+        $partes = array_map(
+            fn($lei) => $lei['numeroLei'] . (($lei['ementa'] ?? '') !== '' && $lei['ementa'] !== $lei['numeroLei'] ? ' (' . rtrim($lei['ementa'], '.') . ')' : ''),
+            $leis
+        );
+        return "\n\n📜 Base legal: " . implode('; ', $partes);
+    }
+
     /** Resume a mensagem de erro do Gemini (sem chave) para exibir em letra pequena. */
     private static function resumirErro(string $mensagem): string
     {
