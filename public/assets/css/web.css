@@ -251,6 +251,9 @@
 .stats .card {
   padding: 20px;
   text-align: center;
+  /* o cartão é branco, mas herdava o texto branco da faixa azul (.sobre-hero) */
+  background: var(--cor-branco, #fff);
+  color: var(--cor-texto, #1f2937);
 }
 
 .stats .numero {

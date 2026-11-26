@@ -42,6 +42,7 @@ require __DIR__ . '/partials/header.php';
 
       <?php foreach ($termos as $termo): ?>
         <?php $orgaos = TermoJuridico::getOrgaos((int) $termo['idTermo']); ?>
+        <?php $leisDoTermo = TermoJuridico::getLeis((int) $termo['idTermo']); ?>
         <details class="card item-resultado" style="display:block;">
           <summary style="cursor:pointer;list-style:none;">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
@@ -49,7 +50,9 @@ require __DIR__ . '/partials/header.php';
                 <h3 style="display:inline;"><?= e($termo['termoTecnico']) ?></h3>
                 <p style="margin-top:8px;"><?= e(mb_strimwidth($termo['explicacaoColoquial'], 0, 140, '…')) ?></p>
               </div>
-              <span class="pill pill-verde"><?= e($termo['categoriaNome'] ?? '') ?></span>
+              <?php if (!empty($termo['categoriaNome'])): ?>
+                <span class="pill pill-verde"><?= e($termo['categoriaNome']) ?></span>
+              <?php endif; ?>
             </div>
           </summary>
           <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--cor-borda);">
@@ -61,6 +64,13 @@ require __DIR__ . '/partials/header.php';
               <p><strong>📍 Procure:</strong>
                 <?php foreach ($orgaos as $orgao): ?>
                   <span class="pill pill-azul"><?= e($orgao['nome']) ?></span>
+                <?php endforeach; ?>
+              </p>
+            <?php endif; ?>
+            <?php if (!empty($leisDoTermo)): ?>
+              <p><strong>📜 Base legal:</strong>
+                <?php foreach ($leisDoTermo as $lei): ?>
+                  <span class="pill pill-cinza" title="<?= e($lei['ementa']) ?>"><?= e($lei['numeroLei']) ?></span>
                 <?php endforeach; ?>
               </p>
             <?php endif; ?>

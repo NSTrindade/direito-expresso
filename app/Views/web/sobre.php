@@ -4,9 +4,9 @@ require __DIR__ . '/partials/header.php';
 
 $equipe = [
     ['nome' => 'Guilherme Queiroz Penarrubia', 'papel' => 'Desenvolvimento'],
-    ['nome' => 'Kelvin Silva Sena', 'papel' => 'Desenvolvimento'],
+    ['nome' => 'Kelvin Silva Sena', 'papel' => 'Prototipação'],
     ['nome' => 'Nicolas Silva Trindade', 'papel' => 'Desenvolvimento'],
-    ['nome' => 'Pedro Henrique de Paula', 'papel' => 'Desenvolvimento'],
+    ['nome' => 'Pedro Henrique de Paula', 'papel' => 'Documentação'],
 ];
 ?>
 

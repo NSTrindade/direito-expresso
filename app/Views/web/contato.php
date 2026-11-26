@@ -53,7 +53,7 @@ require __DIR__ . '/partials/header.php';
           <span class="icone">✉️</span>
           <div>
             <strong>E-mail</strong>
-            <p class="texto-suave" style="margin:0;">contato@direitoexpresso.local</p>
+            <p class="texto-suave" style="margin:0;"><a href="mailto:nico.trindade2@gmail.com">nico.trindade2@gmail.com</a></p>
           </div>
         </div>
         <div class="item">

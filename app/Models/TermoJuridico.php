@@ -28,7 +28,12 @@ class TermoJuridico
     public static function findByCategoria(int $idCategoria): array
     {
         $stmt = Database::getConnection()->prepare(
-            'SELECT * FROM TermoJuridico WHERE idCategoria = ? ORDER BY termoTecnico'
+            // traz também o nome da categoria (a etiqueta do cartão em Consultas aparecia vazia)
+            'SELECT t.*, c.nome AS categoriaNome
+             FROM TermoJuridico t
+             JOIN Categoria c ON c.idCategoria = t.idCategoria
+             WHERE t.idCategoria = ?
+             ORDER BY t.termoTecnico'
         );
         $stmt->execute([$idCategoria]);
         return $stmt->fetchAll();
