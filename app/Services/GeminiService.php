@@ -108,6 +108,10 @@ class GeminiService
             throw new GeminiServiceException('Gemini indisponível — ' . implode(' | ', $erros));
         }
 
+        // Registra quem respondeu (Render → Logs, busque "respondeu com").
+        error_log('[Direito Expresso] Gemini respondeu com ' . $modelo
+            . ($modelo !== $this->model ? ' (reserva; ' . implode(' | ', $erros) . ')' : ''));
+
         $resposta = json_decode($respostaBruta, true);
         // A resposta pode vir dividida em várias "parts" (ex.: assinatura do raciocínio
         // + texto). Junta todo o texto, em vez de ler só a primeira.
