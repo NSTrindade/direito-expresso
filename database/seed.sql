@@ -5,8 +5,6 @@
 -- painel administrativo.
 -- =====================================================================
 
-USE totem_juridico;
-
 -- ---------------------------------------------------------------------
 -- Categorias de problema (triagem do cidadão — não confundir com os
 -- filtros "Constituições/Códigos/Leis/Decretos" do buscador de leis;
